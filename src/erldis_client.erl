@@ -199,9 +199,11 @@ init([Host, Port]) ->
 ensure_started(#redis{socket=undefined, db=DB}=State) ->
 	case connect_socket(State, false) of
 		{error, Why} ->
-			Report = [{?MODULE, unable_to_connect}, {error, Why}, State],
-			error_logger:warning_report(Report),
-			State;
+            %% If we cannot connect, throw an exception so the
+            %% gen_server is terminated. If we don't terminate, calls
+            %% that use the socket will fail as the socket will still
+            %% be 'undefined'.
+            throw({erldis, unable_to_connect, Why});
 		{ok, NewState} ->
 			Socket = NewState#redis.socket,
 			
